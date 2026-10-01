@@ -1,0 +1,13 @@
+# 依赖目录：里面是指向 DSH profile 的目录联接，
+# 是本机专用的，绝不能提交。
+node_modules/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 日志与临时产物
+*.log

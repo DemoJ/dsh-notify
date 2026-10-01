@@ -1,0 +1,30 @@
+{
+  "name": "dsh-notify",
+  "version": "0.2.0",
+  "description": "DSH Host 插件：需要审批 / 权限问题 / 等你回答 / 任务完成时弹系统通知（标题即状态）",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DemoJ/dsh-notify.git"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis-plugin",
+    "notification",
+    "toast"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/schemastery": "*"
+  }
+}
