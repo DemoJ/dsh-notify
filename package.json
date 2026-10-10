@@ -12,6 +12,11 @@
     "lib"
   ],
   "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DemoJ/dsh-notify.git"

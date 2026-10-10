@@ -256,34 +256,41 @@ forked 不通知、提问文案、答案原样透传、畸形输入健壮性。
 
 ---
 
-## 已知限制
+## 关于「设置 → 插件」列表
 
-**它不会出现在「设置 → 插件」列表里。** 这不是 bug：
+**它会以 bundle 的身份出现**（`package.json` 里声明了 `dsh.bundle.patch`，
+所以 dsh 启动时会把它当成一个 profile 层加载）。
 
-那个页面是**配置界面**，渲染的行来自客户端半边注册的 `plugins.item` slot
-（`dsh-client-ui-settings-*` 那一批）。本插件是**纯 Host 插件**，`package.json`
-里连 `dsh` 字段都没有——既没有 `dsh.client`（没有行可渲染），也没有
-`dsh.bundle.patch`（不算 profile layer，进不了 bundle 栏）。
+但要注意这个页面是**配置界面**，不是运行时插件注册表：渲染的行来自客户端半边
+注册的 `plugins.item` slot（`dsh-client-ui-settings-*` 那一批）。本插件是**纯 Host
+插件**，没有 `dsh.client`，所以除了 bundle 那一栏之外不会有额外的配置行。
 
-它照样装载、照样工作。要确认它在跑，看「插件清单」页或上面的验证方法。
+要确认它在跑，看「插件清单」页（应能看到 `include:dsh-notify` 且
+`fiberPhase = active`），或用上面的验证方法。
 
-## 克隆到任意位置（不推荐）
+## 排查：启动时报 `cannot resolve profile bundle`
 
-如果你不想把插件放进 profile 目录，就得自己补上 `schemastery` 的解析路径：
+这个报错来自 `dsh-app-boot` 的 `resolveBundleDir()`——它遍历 `dsh.profile.bundles`，
+对每一项按 Node 的 node_modules 查找顺序探 `package.json`，全都找不到就抛这个错，
+该 bundle 会被记进 `skippedBundles` 并显示成异常。
 
-```powershell
-$PLUGIN  = "C:\path\to\dsh-notify"
-$PROFILE = "$env:USERPROFILE\.dsh\profiles\desktop"
+按顺序检查：
 
-New-Item -ItemType Directory -Force -Path "$PLUGIN\node_modules\@deepseek-ai" | Out-Null
-foreach ($dep in 'schemastery','cordis') {
-  New-Item -ItemType Junction -Path "$PLUGIN\node_modules\@deepseek-ai\$dep" `
-    -Target "$PROFILE\node_modules\@deepseek-ai\$dep"
-}
-```
-
-这两个联接的目标是 profile 里的真包——**所以卸载时务必用 `rmdir` 拆掉它们**
-（见上方卸载一节的警告）。
+1. **源码目录还在吗？** `Test-Path "$PLUGIN\package.json"`。
+   源码被删/被移动（比如放在会被清理的临时目录里）是最常见的原因。
+2. **`$PROFILE\node_modules\dsh-notify` 联接透过能读到 package.json 吗？**
+   ```powershell
+   Test-Path "$PROFILE\node_modules\dsh-notify\package.json"   # 必须是 True
+   ```
+   注意 `Test-Path` 只测目录**会返回 True 也说不定**——一个指向空目录的悬空联接
+   里没有任何东西，必须连 `package.json` 一起测。
+3. **`dsh.bundle.patch` 指向的文件在吗？** 见仓库根的 `cordis.patch.yml`。
+4. 不重启就能验证 bundle 层是否正常（跑的就是 dsh 自己的启动逻辑）：
+   ```powershell
+   $DSH = "$env:APPDATA\npm\node_modules\@deepseek-ai\dsh"
+   node -e "const{join}=require('node:path'),{pathToFileURL}=require('node:url');(async()=>{const m=await import(pathToFileURL(join(process.env.DSH,'node_modules/@deepseek-ai/dsh-app-boot/lib/index.js')).href);const x=await m.loadProfileDirectory('dsh', join(process.env.USERPROFILE,'.dsh/profiles/desktop'), join(process.env.DSH,'package.json'));console.log('skipped:', JSON.stringify(x.skippedBundles ?? []));})()"
+   ```
+   `skipped: []` 就说明启动时不会再有 bundle 报错。
 
 ## 两个踩过的 Windows 坑
 

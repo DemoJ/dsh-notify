@@ -1,0 +1,13 @@
+# dsh-notify 的 profile 层（bundle patch）。
+#
+# 这个文件让 dsh-notify 成为一个「profile bundle」而不是普通依赖：
+# dsh 启动时会遍历 profile manifest 的 dsh.profile.bundles，逐项解析包目录、
+# 读它的 dsh.bundle.patch，再把这里面的 patch 叠加到 loader 树上。
+# 没有这个文件，dsh-notify 被当成 bundle 时会解析失败，并出现在
+# 「跳过加载的 bundle」列表里（界面上就是一条异常）。
+#
+# 这里只声明「挂载哪个模块」；具体配置留给各 profile 自己的 cordis.patch.yml
+# 用 - id: dsh-notify 覆盖（用户层永远叠加在 bundle 层之后）。
+- insert:
+    - id: dsh-notify
+      name: 'dsh-notify'
